@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/nav_total"
+        android:checkable="false"
+        android:title="Total analyze" />
+
+    <group>
+        <item
+        android:id="@+id/nav_log1"
+        android:title="log1"></item>
+        <item
+            android:id="@+id/nav_log2"
+            android:title="log2"></item>
+        <item
+            android:id="@+id/nav_log3"
+            android:title="log3"></item>
+        <item
+            android:id="@+id/nav_log4"
+            android:title="log4"></item>
+        <item
+            android:id="@+id/nav_log5"
+            android:title="log5"></item>
+        <item
+            android:id="@+id/nav_log6"
+            android:title="log6"></item>
+        <item
+            android:id="@+id/nav_log7"
+            android:title="log7"></item>
+        <item
+            android:id="@+id/nav_log8"
+            android:title="log8"></item>
+        <item
+            android:id="@+id/nav_log9"
+            android:title="log9"></item>
+        <item
+            android:id="@+id/nav_log10"
+            android:title="log10"></item>
+        <item
+            android:id="@+id/nav_log11"
+            android:title="log11"></item>
+        <item
+            android:id="@+id/nav_log12"
+            android:title="log12"></item>
+
+    </group>
+
+</menu>
