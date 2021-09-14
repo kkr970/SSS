@@ -1,2 +1,0 @@
-# SSS
- Shock Sensing System
