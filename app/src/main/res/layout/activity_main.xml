@@ -47,6 +47,7 @@
             android:orientation="vertical"
             android:gravity="center">
             <Switch
+                android:id="@+id/sensorswitch"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:thumb="@drawable/switch_thumb"
@@ -80,14 +81,17 @@
         android:layout_weight="1"
         android:paddingHorizontal="5dp">
         <TextView
+            android:id="@+id/acc"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="ACC_VALUE:"/>
         <TextView
+            android:id="@+id/pitch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="ORI_PITCH:"/>
         <TextView
+            android:id="@+id/roll"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="ORI_ROLL:"/>
