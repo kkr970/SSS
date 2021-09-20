@@ -2,12 +2,18 @@ package com.example.sss;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -21,10 +27,9 @@ import java.util.Timer;
 
 public class MainActivity extends AppCompatActivity {
     //레이아웃 연동
-    private Switch sensorswitch;
+    public Switch sensorswitch;
     //시험용 가속도, 피치, 롤 텍스트
     TextView acc, ori_Pitch, ori_Roll;
-
 
     //센서
     private SensorManager mSensorManager = null;
@@ -37,8 +42,11 @@ public class MainActivity extends AppCompatActivity {
 
     SensorData sensortemp = null; // 센서데이터 저장용
     public SensorData sensorresult = null; // 센서결과 저장용
+    public SensorQueue sensorQueue = null; // 센서데이터 저장용 큐
     float[] mGravity;
     float[] mGeomagnetic;
+
+    //백그라운드 서비스
 
 
     //타이머핸들러
@@ -53,6 +61,16 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //권한 확인, 권한 요청
+        int pm1 = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        int pm2 = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
+        if(pm1 == PackageManager.PERMISSION_DENIED || pm2 == PackageManager.PERMISSION_DENIED) {
+            ActivityCompat.requestPermissions(this, new String[]{
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.READ_EXTERNAL_STORAGE}, MODE_PRIVATE
+            );
+        }
 
         //가속도 피치 롤 텍스트
         acc = findViewById(R.id.acc);
@@ -84,6 +102,7 @@ public class MainActivity extends AppCompatActivity {
         sensorresult = new SensorData();
         sensorresult.setAccValue("0.0", "0.0", "0.0");
         sensorresult.setOriValue("0.0", "0.0");
+        sensorQueue = new SensorQueue();
 
     }
     @Override
@@ -153,6 +172,7 @@ public class MainActivity extends AppCompatActivity {
             return Double.parseDouble(oriRoll);
         }
 
+        //값을 스트링으로 나열
         String getAccValue() {
             return accX + "," + accY + "," + accZ;
         }
@@ -160,7 +180,23 @@ public class MainActivity extends AppCompatActivity {
             return oriPitch + "," + oriRoll;
         }
     }
+    //센서 데이터 저장, 엑셀로 꺼내오기 위한 큐
+    private class SensorQueue{
+        private int size = 30;
+        private double[][] list = new double[size][3];
+        private int rear;
 
+        public SensorQueue() {
+            rear = size - 1;
+        }
+        public void enqueue(double acc, double pitch, double roll){
+            rear = (rear+1) % size;
+            list[rear][0] = acc;
+            list[rear][1] = pitch;
+            list[rear][2] = roll;
+        }
+
+    }
 
     //가속도센서 리스너
     private class AccelometerListener implements SensorEventListener {
@@ -210,16 +246,24 @@ public class MainActivity extends AppCompatActivity {
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked){
             if(isChecked){
                 startSensing();
+                Intent bgService = new Intent(getApplicationContext(), SensingService.class);
+                bgService.putExtra("isStart", true);
+                startService(bgService);
+
                 timerHandler.sendEmptyMessage(MESSAGE_TIMER_START);
             }
             else{
                 stopSensing();
+                Intent bgService = new Intent(getApplicationContext(), SensingService.class);
+                bgService.putExtra("isStart", false);
+                startService(bgService);
+
                 timerHandler.sendEmptyMessage(MESSAGE_TIMER_STOP);
             }
         }
     }
 
-    //타이머핸들러
+    //타이머핸들러, 충격감지 및 현재 센서 상태 temp 저장
     private class Timerhandler extends Handler{
         @Override
         public void handleMessage(@NonNull Message msg){
@@ -228,6 +272,7 @@ public class MainActivity extends AppCompatActivity {
                 case MESSAGE_TIMER_START:
                     Log.e("TimerHandler", "Timer Start");
                     flag = 0;
+                    shockflag = 0;
                     this.removeMessages(MESSAGE_TIMER_REPEAT);
                     this.sendEmptyMessage(MESSAGE_TIMER_REPEAT);
                     break;
@@ -235,44 +280,72 @@ public class MainActivity extends AppCompatActivity {
                 case MESSAGE_TIMER_REPEAT:
                     Log.d("TimerHandler", "Timer Repeat");
                     this.sendEmptyMessageDelayed(MESSAGE_TIMER_REPEAT, 50);
+                    //센서 on 후, 약간의 텀을 두어 센서가 작동하는 시간을 기다림
                     if(flag < 5){
                         flag = flag + 1;
-                    }else {
+                    }else{
+                        //센싱 시작
                         SensorData sd = sensortemp;
                         switch (shockflag) {
                             case 0:
                                 acc.setText("ACC_VALUE: " + String.valueOf(sd.getAccSize()));
                                 ori_Pitch.setText("ORI_PITCH: " + String.valueOf(sd.getPitch()));
                                 ori_Roll.setText("ORI_ROLL: " + String.valueOf(sd.getRoll()));
+                                sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
+                                //자유낙하 감지, acc가 0에 수렴할때
                                 if(sd.getAccSize() < 1.5) shockflag = shockflag + 1;
                                 break;
 
-                            case 1:
-                            case 2:
-                            case 3:
-                            case 4:
-                                acc.setText(String.valueOf(sd.getAccSize()));
-                                ori_Pitch.setText(String.valueOf(sd.getPitch()));
-                                ori_Roll.setText(String.valueOf(sd.getRoll()));
+                            case 1: case 2: case 3: case 4:
+                                acc.setText("ACC_VALUE: " + String.valueOf(sd.getAccSize()));
+                                ori_Pitch.setText("ORI_PITCH: " + String.valueOf(sd.getPitch()));
+                                ori_Roll.setText("ORI_ROLL: " + String.valueOf(sd.getRoll()));
+                                sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
+                                //계속 자유낙하인 상태이면 case5 이동, 아니면 case0 이동
                                 if(sd.getAccSize() < 1.5) shockflag = shockflag + 1;
                                 else shockflag = 0;
                                 break;
 
+                            //자유 낙하중임을 인식, shockflag가 계속 5를 유지
                             case 5:
-                                acc.setText(String.valueOf(sd.getAccSize()));
-                                ori_Pitch.setText(String.valueOf(sd.getPitch()));
-                                ori_Roll.setText(String.valueOf(sd.getRoll()));
+                                acc.setText("ACC_VALUE: " + String.valueOf(sd.getAccSize()));
+                                ori_Pitch.setText("ORI_PITCH: " + String.valueOf(sd.getPitch()));
+                                ori_Roll.setText("ORI_ROLL: " + String.valueOf(sd.getRoll()));
+                                sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
+                                //낙하가 끝남, 충격을 크게 받기 때문에 가속도가 높게 나옴
                                 if(sd.getAccSize() >= 1.5){
                                     Log.e("CheckShock","Detected Shock!!");
                                     this.removeMessages(MESSAGE_TIMER_REPEAT);
-                                    sensorresult = sd;
-                                    shockflag = 0;
+                                    sensorresult = sd; //충격 시 센서 데이터 결과값을 저장
+                                    shockflag = shockflag + 1;
                                 }
+                                break;
+
+                            //큐에 저장하기 위한 과정(충격순간을 중앙으로 보내기)
+                            case 6: case 7: case 8: case 9: case 10:
+                            case 11: case 12: case 13: case 14: case 15:
+                            case 16: case 17: case 18: case 19:
+                                acc.setText("ACC_VALUE: " + String.valueOf(sd.getAccSize()));
+                                ori_Pitch.setText("ORI_PITCH: " + String.valueOf(sd.getPitch()));
+                                ori_Roll.setText("ORI_ROLL: " + String.valueOf(sd.getRoll()));
+                                sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
+                                shockflag = shockflag + 1;
+                                break;
+
+                            //큐를 엑셀파일로 저장
+                            case 20:
+                                acc.setText("ACC_VALUE: " + String.valueOf(sd.getAccSize()));
+                                ori_Pitch.setText("ORI_PITCH: " + String.valueOf(sd.getPitch()));
+                                ori_Roll.setText("ORI_ROLL: " + String.valueOf(sd.getRoll()));
+                                sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
+                                sensorswitch.setChecked(false);
+                                // 여기에 큐를 엑셀파일로 추출하고 저장하는 기능 추가
+                                // or 큐를 머신러닝을 돌림 충격이라 판단하면 저장
+                                shockflag = 0;
                                 break;
                         }
                     }
                     break;
-
                 case MESSAGE_TIMER_STOP:
                     Log.e("TimerHandler", "Timer Stop");
                     this.removeMessages(MESSAGE_TIMER_REPEAT);
