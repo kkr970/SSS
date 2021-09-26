@@ -1,5 +1,12 @@
 package com.example.sss;
 
+/*
+지금 여기 있는 센서관련 코드들 삭제해야하는지는 나중에 판단하는게 좋을듯
+  --센서 관련 코드의 시작, 끝은 스위치 리스너, Destroy()에 있음--
+현재 백그라운드 서비스가 잘 작동하는지 확인(낙하시 파일 저장이 되는가?)한 뒤에
+삭제
+ */
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -46,9 +53,6 @@ public class MainActivity extends AppCompatActivity {
     float[] mGravity;
     float[] mGeomagnetic;
 
-    //백그라운드 서비스
-
-
     //타이머핸들러
     Timerhandler timerHandler = null;
     private static final int MESSAGE_TIMER_START = 100;
@@ -65,10 +69,12 @@ public class MainActivity extends AppCompatActivity {
         //권한 확인, 권한 요청
         int pm1 = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
         int pm2 = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
-        if(pm1 == PackageManager.PERMISSION_DENIED || pm2 == PackageManager.PERMISSION_DENIED) {
+        int pm3 = ContextCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE);
+        if(pm1 == PackageManager.PERMISSION_DENIED || pm2 == PackageManager.PERMISSION_DENIED || pm3 == PackageManager.PERMISSION_DENIED) {
             ActivityCompat.requestPermissions(this, new String[]{
                     Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                    Manifest.permission.READ_EXTERNAL_STORAGE}, MODE_PRIVATE
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.FOREGROUND_SERVICE}, MODE_PRIVATE
             );
         }
 
@@ -80,12 +86,10 @@ public class MainActivity extends AppCompatActivity {
         //타이머핸들러
         timerHandler = new Timerhandler();
 
-        //센서매니저
-        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-
         //중앙 on/off 스위치
         sensorswitch = findViewById(R.id.sensorswitch);
         sensorswitch.setOnCheckedChangeListener(new sensorSwitchListener());
+
 
         //센서, 리스너 할당
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -104,6 +108,7 @@ public class MainActivity extends AppCompatActivity {
         sensorresult.setOriValue("0.0", "0.0");
         sensorQueue = new SensorQueue();
 
+
     }
     @Override
     protected void onStop(){
@@ -118,8 +123,42 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         Log.e("LOG", "onDestroy()");
-        stopSensing();
+        //stopSensing();
     }
+
+
+    //중앙 on/off 스위치작동 리스너
+    class sensorSwitchListener implements CompoundButton.OnCheckedChangeListener{
+        @Override
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked){
+            if(isChecked){
+                //startSensing();
+                Intent bgService = new Intent(getApplicationContext(), SensingService.class);
+                bgService.putExtra("isStart", true);
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+                    startForegroundService(bgService);
+                    //timerHandler.sendEmptyMessage(MESSAGE_TIMER_START);
+                }else {
+                    startService(bgService);
+                    //timerHandler.sendEmptyMessage(MESSAGE_TIMER_START);
+                }
+            }
+            else{
+                //stopSensing();
+                Intent bgService = new Intent(getApplicationContext(), SensingService.class);
+                bgService.putExtra("isStart", false);
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+                    startForegroundService(bgService);
+                }else {
+                    startService(bgService);
+                }
+                stopService(bgService);
+
+                //timerHandler.sendEmptyMessage(MESSAGE_TIMER_STOP);
+            }
+        }
+    }
+
 
     //센싱 시작
     public void startSensing(){
@@ -136,7 +175,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     //센서의 데이터 값을 넣기 위한 클래스
-    public static class SensorData{
+    public class SensorData{
         String accX, accY, accZ;
         String oriPitch, oriRoll;
 
@@ -181,7 +220,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     //센서 데이터 저장, 엑셀로 꺼내오기 위한 큐
-    private class SensorQueue{
+    class SensorQueue{
         private int size = 30;
         private double[][] list = new double[size][3];
         private int rear;
@@ -199,7 +238,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //가속도센서 리스너
-    private class AccelometerListener implements SensorEventListener {
+    class AccelometerListener implements SensorEventListener {
         @Override
         public void onSensorChanged(SensorEvent event) {
             mGravity = event.values;
@@ -217,7 +256,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     //자기장센서 리스너
-    private class MagneticfieldListener implements SensorEventListener{
+    class MagneticfieldListener implements SensorEventListener{
         @Override
         public void onSensorChanged(SensorEvent event) {
             mGeomagnetic = event.values;
@@ -239,32 +278,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
-    //중앙 on/off 스위치작동 리스너
-    class sensorSwitchListener implements CompoundButton.OnCheckedChangeListener{
-        @Override
-        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked){
-            if(isChecked){
-                startSensing();
-                Intent bgService = new Intent(getApplicationContext(), SensingService.class);
-                bgService.putExtra("isStart", true);
-                startService(bgService);
-
-                timerHandler.sendEmptyMessage(MESSAGE_TIMER_START);
-            }
-            else{
-                stopSensing();
-                Intent bgService = new Intent(getApplicationContext(), SensingService.class);
-                bgService.putExtra("isStart", false);
-                startService(bgService);
-
-                timerHandler.sendEmptyMessage(MESSAGE_TIMER_STOP);
-            }
-        }
-    }
-
     //타이머핸들러, 충격감지 및 현재 센서 상태 temp 저장
-    private class Timerhandler extends Handler{
+    class Timerhandler extends Handler{
         @Override
         public void handleMessage(@NonNull Message msg){
             super.handleMessage(msg);
@@ -338,7 +353,6 @@ public class MainActivity extends AppCompatActivity {
                                 ori_Pitch.setText("ORI_PITCH: " + String.valueOf(sd.getPitch()));
                                 ori_Roll.setText("ORI_ROLL: " + String.valueOf(sd.getRoll()));
                                 sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
-                                sensorswitch.setChecked(false);
                                 // 여기에 큐를 엑셀파일로 추출하고 저장하는 기능 추가
                                 // or 큐를 머신러닝을 돌림 충격이라 판단하면 저장
                                 shockflag = 0;
