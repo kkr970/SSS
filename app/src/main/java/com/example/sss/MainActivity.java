@@ -25,7 +25,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.view.View;
 import android.widget.CompoundButton;
+import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -34,7 +36,9 @@ import java.util.Timer;
 
 public class MainActivity extends AppCompatActivity {
     //레이아웃 연동
-    public Switch sensorswitch;
+    private Switch sensorswitch;
+    private ImageButton settingBtn;
+
     //시험용 가속도, 피치, 롤 텍스트
     TextView acc, ori_Pitch, ori_Roll;
 
@@ -77,6 +81,14 @@ public class MainActivity extends AppCompatActivity {
                     Manifest.permission.FOREGROUND_SERVICE}, MODE_PRIVATE
             );
         }
+        //UI 이동 버튼
+          //Settings 이동
+        settingBtn = (ImageButton)findViewById(R.id.settingBtn);
+        settingBtn.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view){ openSetting(); }
+        });
+
 
         //가속도 피치 롤 텍스트
         acc = findViewById(R.id.acc);
@@ -126,6 +138,12 @@ public class MainActivity extends AppCompatActivity {
         //stopSensing();
     }
 
+    //UI이동 버튼
+       //Settings Open
+    public void openSetting(){
+        Intent intent = new Intent(this, SettingsActivity.class);
+        startActivity(intent);
+    }
 
     //중앙 on/off 스위치작동 리스너
     class sensorSwitchListener implements CompoundButton.OnCheckedChangeListener{
