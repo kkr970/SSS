@@ -11,10 +11,12 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.ViewModelStoreOwner;
 
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -65,6 +67,11 @@ public class MainActivity extends AppCompatActivity {
     int flag;
     int shockflag = 0;
 
+    //스위치 상태 유지 SP
+    //SWITCH_DATA 스위치 on/off 저장값
+    private SharedPreferences switchSP;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -89,7 +96,6 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view){ openSetting(); }
         });
 
-
         //가속도 피치 롤 텍스트
         acc = findViewById(R.id.acc);
         ori_Pitch = findViewById(R.id.pitch);
@@ -102,6 +108,10 @@ public class MainActivity extends AppCompatActivity {
         sensorswitch = findViewById(R.id.sensorswitch);
         sensorswitch.setOnCheckedChangeListener(new sensorSwitchListener());
 
+        //On Off스위치 SP
+        switchSP = getSharedPreferences("switchSP", MODE_PRIVATE);
+        boolean isChecked = switchSP.getBoolean("SWITCH_DATA", false);
+        sensorswitch.setChecked(isChecked);
 
         //센서, 리스너 할당
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -125,6 +135,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop(){
         super.onStop();
+        switchSave();
     }
     @Override
     protected void onPause() {
@@ -144,6 +155,15 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, SettingsActivity.class);
         startActivity(intent);
     }
+
+    //스위치 데이터값 저장함수 SP
+    private void switchSave(){
+        SharedPreferences.Editor editor = switchSP.edit();
+        editor.putBoolean("SWITCH_DATA", sensorswitch.isChecked());
+        editor.apply();
+        editor.commit();
+    }
+
 
     //중앙 on/off 스위치작동 리스너
     class sensorSwitchListener implements CompoundButton.OnCheckedChangeListener{
