@@ -22,10 +22,13 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.PowerManager;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.CompoundButton;
@@ -68,7 +71,6 @@ public class MainActivity extends AppCompatActivity {
     int shockflag = 0;
 
     //스위치 상태 유지 SP
-    //SWITCH_DATA 스위치 on/off 저장값
     private SharedPreferences switchSP;
 
 
@@ -81,13 +83,24 @@ public class MainActivity extends AppCompatActivity {
         int pm1 = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
         int pm2 = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
         int pm3 = ContextCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE);
-        if(pm1 == PackageManager.PERMISSION_DENIED || pm2 == PackageManager.PERMISSION_DENIED || pm3 == PackageManager.PERMISSION_DENIED) {
+        if(pm1 == PackageManager.PERMISSION_DENIED || pm2 == PackageManager.PERMISSION_DENIED ||
+                pm3 == PackageManager.PERMISSION_DENIED) {
             ActivityCompat.requestPermissions(this, new String[]{
                     Manifest.permission.WRITE_EXTERNAL_STORAGE,
                     Manifest.permission.READ_EXTERNAL_STORAGE,
                     Manifest.permission.FOREGROUND_SERVICE}, MODE_PRIVATE
             );
         }
+        Intent i = new Intent();
+        String packageName = getPackageName();
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        if(pm.isIgnoringBatteryOptimizations(packageName)){
+            i.setAction(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+        }else{
+            i.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+            i.setData(Uri.parse("package: "+packageName));
+        }
+
         //UI 이동 버튼
           //Settings 이동
         settingBtn = (ImageButton)findViewById(R.id.settingBtn);
@@ -146,6 +159,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         Log.e("LOG", "onDestroy()");
+
         //stopSensing();
     }
 
@@ -161,7 +175,6 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences.Editor editor = switchSP.edit();
         editor.putBoolean("SWITCH_DATA", sensorswitch.isChecked());
         editor.apply();
-        editor.commit();
     }
 
 

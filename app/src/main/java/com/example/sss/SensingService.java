@@ -84,6 +84,8 @@ public class SensingService extends Service {
         sensorresult.setAccValue("0.0", "0.0", "0.0");
         sensorresult.setOriValue("0.0", "0.0");
         sensorQueue = new SensorQueue();
+
+        initializeNotification();
     }
 
     @Override
@@ -94,13 +96,10 @@ public class SensingService extends Service {
         //백그라운드 서비스용
         serviceIntent = intent;
 
-        initializeNotification();
-
         if(intent == null){
             return Service.START_STICKY; //Sticky로 서비스 유지
         }else{
             boolean msg = intent.getBooleanExtra("isStart", false);
-            //알림창 매니저, 채널, 빌더
 
             if(msg){
                 //서비스 시작
@@ -116,10 +115,6 @@ public class SensingService extends Service {
                 //센싱 종료
                 stopSensing();
                 timerHandler.sendEmptyMessage(MESSAGE_TIMER_STOP);
-
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
-                    stopForeground(true);
-                }
             }
         }
 
@@ -324,7 +319,16 @@ public class SensingService extends Service {
 
     //알림창 초기화
     public void initializeNotification(){
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "1");
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationChannel channel = manager.getNotificationChannel("SSS");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if(channel == null){
+                channel = new NotificationChannel("SSS", "undead_service", NotificationManager.IMPORTANCE_HIGH);
+                manager.createNotificationChannel(channel);
+            }
+        }
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "SSS");
         builder.setSmallIcon(R.mipmap.ic_launcher);
 
         NotificationCompat.BigTextStyle style = new NotificationCompat.BigTextStyle();
@@ -335,7 +339,6 @@ public class SensingService extends Service {
         builder.setContentText(null);
         builder.setContentTitle(null);
         builder.setOngoing(true);
-
         builder.setStyle(style);
         builder.setWhen(0);
         builder.setShowWhen(false);
@@ -344,17 +347,17 @@ public class SensingService extends Service {
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
         builder.setContentIntent(pendingIntent);
 
-        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            manager.createNotificationChannel(new NotificationChannel("1", "undead_service", NotificationManager.IMPORTANCE_NONE));
-        }
         Notification notification = builder.build();
         startForeground(1, notification);
     }
 
+
     @Override
     public void onDestroy(){
         super.onDestroy();
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+            stopForeground(true);
+        }
 
         //죽지않는 서비스를 위한 AlarmReceiver
         Log.d("Service onDestory()", "AlarmReceiver");
