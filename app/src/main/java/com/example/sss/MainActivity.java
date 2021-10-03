@@ -73,7 +73,6 @@ public class MainActivity extends AppCompatActivity {
     //스위치 상태 유지 SP
     private SharedPreferences switchSP;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

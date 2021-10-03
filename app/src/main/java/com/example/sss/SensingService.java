@@ -60,6 +60,8 @@ public class SensingService extends Service {
     int shockflag = 0;
 
 
+
+
     @Override
     public void onCreate(){
         super.onCreate();
