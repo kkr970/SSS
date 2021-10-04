@@ -13,6 +13,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Build;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -20,6 +21,13 @@ import android.provider.CalendarContract;
 import android.util.Log;
 import android.widget.Switch;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Calendar;
 import java.util.Timer;
 
@@ -58,8 +66,6 @@ public class SensingService extends Service {
     private static final int MESSAGE_TIMER_STOP = 102;
     int flag;
     int shockflag = 0;
-
-
 
 
     @Override
@@ -116,6 +122,16 @@ public class SensingService extends Service {
 
                 //센싱 종료
                 stopSensing();
+                
+                //데이터 파일의 수가 10개가 넘어가면 오래된 1개를 지우고, 숫자-1, 마지막에 생성
+                if(this.fileList().length >= 10) {
+                    this.deleteFile(this.fileList()[0]);
+                    File fa[] = this.getFilesDir().listFiles();
+                    for(int i = 0 ; i < fa.length ; i ++){
+                        fa[i].renameTo(new File(this.getFilesDir()+"/Data"+(i+1)+".csv"));
+                    }
+                }
+                writeFile();
                 timerHandler.sendEmptyMessage(MESSAGE_TIMER_STOP);
             }
         }
@@ -197,6 +213,13 @@ public class SensingService extends Service {
             list[rear][2] = roll;
         }
 
+        public double getAcc(int num) {
+            return list[num][0];
+        }
+
+        public double[][] getList() {
+            return list;
+        }
     }
 
     //가속도센서 리스너
@@ -226,7 +249,7 @@ public class SensingService extends Service {
             float R[] = new float[9];
             boolean success = SensorManager.getRotationMatrix(R, null, mGravity, mGeomagnetic);
             if(success){
-                float orientation[] = new float[3];
+                float[] orientation = new float[3];
                 SensorManager.getOrientation(R, orientation);
                 String oriPitch = String.format("%.3f",Math.toDegrees(orientation[1]));
                 String oriRoll = String.format("%.3f",Math.toDegrees(orientation[2]));
@@ -305,6 +328,7 @@ public class SensingService extends Service {
                             case 20:
                                 sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
                                 // 여기에 큐를 엑셀파일로 추출하고 저장하는 기능 추가
+                                writeFile();
                                 // or 큐를 머신러닝을 돌림 충격이라 판단하면 저장
                                 shockflag = 0;
                                 break;
@@ -353,6 +377,22 @@ public class SensingService extends Service {
         startForeground(1, notification);
     }
 
+    //파일 생성
+    public void writeFile(){
+        Log.d("MAKE_FILE","MAKE_FILE");
+        File file = new File(this.getFilesDir()+"/Data"+(this.fileList().length+1)+".csv");
+        try {
+            file.createNewFile();
+            PrintWriter pw = new PrintWriter(file);
+
+            for(int i = 0 ; i < sensorQueue.size ; i++){
+                pw.println(sensorQueue.getAcc(i));
+            }
+            pw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     public void onDestroy(){
