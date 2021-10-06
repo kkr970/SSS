@@ -38,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     //레이아웃 연동
     private Switch sensorswitch;
     private ImageButton settingBtn;
+    private ImageButton analyzeBtn;
 
 
     //스위치 상태 유지 SP
@@ -87,7 +88,15 @@ public class MainActivity extends AppCompatActivity {
         switchSP = getSharedPreferences("switchSP", MODE_PRIVATE);
         boolean isChecked = switchSP.getBoolean("SWITCH_DATA", false);
         sensorswitch.setChecked(isChecked);
+
+        //지도 화면 이동
+        analyzeBtn = (ImageButton)findViewById(R.id.analyzeBtn);
+        analyzeBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {openChart(); }
+        });
     }
+
     @Override
     protected void onStop(){
         super.onStop();
@@ -116,6 +125,12 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences.Editor editor = switchSP.edit();
         editor.putBoolean("SWITCH_DATA", sensorswitch.isChecked());
         editor.apply();
+    }
+
+    //지도 이동 버튼
+    private void openChart() {
+        Intent intent = new Intent(this, MapActivity.class);
+        startActivity(intent);
     }
 
 
