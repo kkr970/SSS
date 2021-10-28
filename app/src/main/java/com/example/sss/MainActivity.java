@@ -7,6 +7,7 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelStoreOwner;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -44,6 +45,9 @@ public class MainActivity extends AppCompatActivity {
     //스위치 상태 유지 SP
     private SharedPreferences switchSP;
 
+    //다른엑티비티 연동
+    public static Context mContext;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,12 +57,17 @@ public class MainActivity extends AppCompatActivity {
         int pm1 = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
         int pm2 = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
         int pm3 = ContextCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE);
+        int pm4 = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
+        int pm5 = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION);
         if(pm1 == PackageManager.PERMISSION_DENIED || pm2 == PackageManager.PERMISSION_DENIED ||
-                pm3 == PackageManager.PERMISSION_DENIED) {
+           pm3 == PackageManager.PERMISSION_DENIED || pm4 == PackageManager.PERMISSION_DENIED||
+           pm5 == PackageManager.PERMISSION_DENIED) {
             ActivityCompat.requestPermissions(this, new String[]{
                     Manifest.permission.WRITE_EXTERNAL_STORAGE,
                     Manifest.permission.READ_EXTERNAL_STORAGE,
-                    Manifest.permission.FOREGROUND_SERVICE}, MODE_PRIVATE
+                    Manifest.permission.FOREGROUND_SERVICE,
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION}, MODE_PRIVATE
             );
         }
         Intent i = new Intent();
@@ -158,5 +167,9 @@ public class MainActivity extends AppCompatActivity {
                 stopService(bgService);
             }
         }
+    }
+
+    public Activity getActivity(){
+        return this;
     }
 }

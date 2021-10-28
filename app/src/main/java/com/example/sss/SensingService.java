@@ -1,5 +1,7 @@
 package com.example.sss;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -8,10 +10,13 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
@@ -32,6 +37,7 @@ import java.util.Calendar;
 import java.util.Timer;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 
 public class SensingService extends Service {
@@ -40,7 +46,7 @@ public class SensingService extends Service {
 
     //서비스 사용 메세지키
     public static final String MESSAGE_KEY = "false";
-    
+
     //알림창 채널 ID
     public static Intent serviceIntent = null;
 
@@ -58,7 +64,6 @@ public class SensingService extends Service {
     public SensorQueue sensorQueue = null; // 센서데이터 저장용 큐
     float[] mGravity;
     float[] mGeomagnetic;
-    public String pitchroll = ""; //낙하시 pitch, roll
 
     //타이머핸들러
     Timerhandler timerHandler = null;
@@ -68,9 +73,13 @@ public class SensingService extends Service {
     int flag;
     int shockflag = 0;
 
+    //현재 위치 가져오기용
+    private LocationManager locationManager = null;
+    private static final int REQUEST_CODE_LOCATION = 2;
+
 
     @Override
-    public void onCreate(){
+    public void onCreate() {
         super.onCreate();
         Log.d("StartService", "onCreate");
 
@@ -85,6 +94,10 @@ public class SensingService extends Service {
         magSensor = sensormanager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         magLis = new MagneticfieldListener();
 
+        //위치 리스너 할당
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+
         //저장용 센서데이터 생성
         sensortemp = new SensorData();
         sensortemp.setAccValue("0.0", "0.0", "0.0");
@@ -98,38 +111,38 @@ public class SensingService extends Service {
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startID){
+    public int onStartCommand(Intent intent, int flags, int startID) {
         super.onStartCommand(intent, flags, startID);
         Log.d("StartService", "onStartCommand");
 
         //백그라운드 서비스용
         serviceIntent = intent;
 
-        if(intent == null){
+        if (intent == null) {
             return Service.START_STICKY; //Sticky로 서비스 유지
-        }else{
+        } else {
             boolean msg = intent.getBooleanExtra("isStart", false);
 
-            if(msg){
+            if (msg) {
                 //서비스 시작
                 Log.e("StartService", "Service is Start");
 
                 //센싱 시작
                 startSensing();
                 timerHandler.sendEmptyMessage(MESSAGE_TIMER_START);
-            }else{
+            } else {
                 //서비스 종료
                 Log.e("StartService", "Service is Stop");
 
                 //센싱 종료
                 stopSensing();
-                
+
                 //데이터 파일의 수가 10개가 넘어가면 오래된 1개를 지우고, 숫자-1, 마지막에 생성
-                if(this.fileList().length >= 10) {
+                if (this.fileList().length >= 10) {
                     this.deleteFile(this.fileList()[0]);
                     File fa[] = this.getFilesDir().listFiles();
-                    for(int i = 0 ; i < fa.length ; i ++){
-                        fa[i].renameTo(new File(this.getFilesDir()+"/Data"+(i+1)+".csv"));
+                    for (int i = 0; i < fa.length; i++) {
+                        fa[i].renameTo(new File(this.getFilesDir() + "/Data" + (i + 1) + ".csv"));
                     }
                 }
                 writeFile();
@@ -141,24 +154,25 @@ public class SensingService extends Service {
     }
 
     //센싱 시작
-    public void startSensing(){
+    public void startSensing() {
         sensormanager.registerListener(accLis, accSensor, SensorManager.SENSOR_DELAY_UI);
         sensormanager.registerListener(magLis, magSensor, SensorManager.SENSOR_DELAY_UI);
         Log.i("Start Service Estimation", "Start Service Estimation");
     }
+
     //센싱 종료
-    public void stopSensing(){
+    public void stopSensing() {
         sensormanager.unregisterListener(accLis);
         sensormanager.unregisterListener(magLis);
         Log.i("Stop Service Estimation", "Stop Service Estimation");
     }
 
     //센서의 데이터 값을 넣기 위한 클래스
-    public class SensorData{
+    public class SensorData {
         String accX, accY, accZ;
         String oriPitch, oriRoll;
 
-        SensorData(){
+        SensorData() {
             this.accX = "";
             this.accY = "";
             this.accZ = "";
@@ -167,26 +181,29 @@ public class SensingService extends Service {
             this.oriRoll = "";
         }
 
-        void setAccValue(String acX, String acY, String acZ){
+        void setAccValue(String acX, String acY, String acZ) {
             accX = acX;
             accY = acY;
             accZ = acZ;
         }
-        void setOriValue(String orPitch, String orRoll){
+
+        void setOriValue(String orPitch, String orRoll) {
             oriPitch = orPitch;
             oriRoll = orRoll;
         }
 
-        double getAccSize(){
+        double getAccSize() {
             double x = Double.parseDouble(accX);
             double y = Double.parseDouble(accY);
             double z = Double.parseDouble(accZ);
-            return Math.sqrt(x*x + y*y + z*z);
+            return Math.sqrt(x * x + y * y + z * z);
         }
-        double getPitch(){
+
+        double getPitch() {
             return Double.parseDouble(oriPitch);
         }
-        double getRoll(){
+
+        double getRoll() {
             return Double.parseDouble(oriRoll);
         }
 
@@ -194,12 +211,14 @@ public class SensingService extends Service {
         String getAccValue() {
             return accX + "," + accY + "," + accZ;
         }
+
         String getOriValue() {
             return oriPitch + "," + oriRoll;
         }
     }
+
     //센서 데이터 저장, 엑셀로 꺼내오기 위한 큐
-    class SensorQueue{
+    class SensorQueue {
         private int size = 30;
         private double[][] list = new double[size][3];
         private int rear;
@@ -207,8 +226,9 @@ public class SensingService extends Service {
         public SensorQueue() {
             rear = size - 1;
         }
-        public void enqueue(double acc, double pitch, double roll){
-            rear = (rear+1) % size;
+
+        public void enqueue(double acc, double pitch, double roll) {
+            rear = (rear + 1) % size;
             list[rear][0] = acc;
             list[rear][1] = pitch;
             list[rear][2] = roll;
@@ -241,19 +261,20 @@ public class SensingService extends Service {
 
         }
     }
+
     //자기장센서 리스너
-    class MagneticfieldListener implements SensorEventListener{
+    class MagneticfieldListener implements SensorEventListener {
         @Override
         public void onSensorChanged(SensorEvent event) {
             mGeomagnetic = event.values;
 
             float R[] = new float[9];
             boolean success = SensorManager.getRotationMatrix(R, null, mGravity, mGeomagnetic);
-            if(success){
+            if (success) {
                 float[] orientation = new float[3];
                 SensorManager.getOrientation(R, orientation);
-                String oriPitch = String.format("%.3f",Math.toDegrees(orientation[1]));
-                String oriRoll = String.format("%.3f",Math.toDegrees(orientation[2]));
+                String oriPitch = String.format("%.3f", Math.toDegrees(orientation[1]));
+                String oriRoll = String.format("%.3f", Math.toDegrees(orientation[2]));
                 sensortemp.setOriValue(oriPitch, oriRoll);
             }
         }
@@ -263,10 +284,11 @@ public class SensingService extends Service {
 
         }
     }
+
     //센서 타이머 핸들러
-    class Timerhandler extends Handler{
+    class Timerhandler extends Handler {
         @Override
-        public void handleMessage(@NonNull Message msg){
+        public void handleMessage(@NonNull Message msg) {
             super.handleMessage(msg);
             switch (msg.what) {
                 case MESSAGE_TIMER_START:
@@ -281,9 +303,9 @@ public class SensingService extends Service {
                     Log.d("Service TimerHandler", "Service Timer Repeat");
                     this.sendEmptyMessageDelayed(MESSAGE_TIMER_REPEAT, 50);
                     //센서 on 후, 약간의 텀을 두어 센서가 작동하는 시간을 기다림
-                    if(flag < 5){
+                    if (flag < 5) {
                         flag = flag + 1;
-                    }else{
+                    } else {
                         //센싱 시작
                         SensorData sd = sensortemp;
                         switch (shockflag) {
@@ -295,13 +317,14 @@ public class SensingService extends Service {
                                 */
                                 sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
                                 //자유낙하 감지, acc가 0에 수렴할때
-                                if(sd.getAccSize() < 1.5) shockflag = shockflag + 1;
+                                if (sd.getAccSize() < 1.5) shockflag = shockflag + 1;
                                 break;
 
-                            case 1: case 2:
+                            case 1:
+                            case 2:
                                 sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
                                 //계속 자유낙하인 상태이면 case5 이동, 아니면 case0 이동
-                                if(sd.getAccSize() < 1.5) shockflag = shockflag + 1;
+                                if (sd.getAccSize() < 1.5) shockflag = shockflag + 1;
                                 else shockflag = 0;
                                 break;
 
@@ -309,8 +332,8 @@ public class SensingService extends Service {
                             case 3:
                                 sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
                                 //낙하가 끝남, 충격을 크게 받기 때문에 가속도가 높게 나옴
-                                if(sd.getAccSize() >= 5){
-                                    Log.e("CheckShock","Detected Shock!!");
+                                if (sd.getAccSize() >= 5) {
+                                    Log.e("CheckShock", "Detected Shock!!");
                                     this.removeMessages(MESSAGE_TIMER_REPEAT);
                                     sensorresult = sd; //충격 시 센서 데이터 결과값을 저장
                                     shockflag = shockflag + 1;
@@ -318,15 +341,27 @@ public class SensingService extends Service {
                                 break;
 
                             //큐에 저장하기 위한 과정(충격순간을 중앙으로 보내기)
-                            case 4: case 5: case 6: case 7: case 8:
-                            case 9: case 10: case 11: case 12: case 13:
-                            case 14:case 15: case 16: case 17:
+                            case 4:
+                            case 5:
+                            case 6:
+                            case 7:
+                            case 8:
+                            case 9:
+                            case 10:
+                            case 11:
+                            case 12:
+                            case 13:
+                            case 14:
+                            case 15:
+                            case 16:
+                            case 17:
                                 sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
                                 shockflag = shockflag + 1;
                                 break;
 
                             //큐를 엑셀파일로 저장
-                            case 18: default:
+                            case 18:
+                            default:
                                 sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
                                 // 여기에 큐를 엑셀파일로 추출하고 저장하는 기능 추가
                                 writeFile();
@@ -345,11 +380,11 @@ public class SensingService extends Service {
     }
 
     //알림창 초기화
-    public void initializeNotification(){
+    public void initializeNotification() {
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         NotificationChannel channel = manager.getNotificationChannel("SSS");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            if(channel == null){
+            if (channel == null) {
                 channel = new NotificationChannel("SSS", "undead_service", NotificationManager.IMPORTANCE_HIGH);
                 manager.createNotificationChannel(channel);
             }
@@ -379,21 +414,49 @@ public class SensingService extends Service {
     }
 
     //파일 생성
-    public void writeFile(){
-        Log.d("MAKE_FILE","MAKE_FILE");
-        File file = new File(this.getFilesDir()+"/Data"+(this.fileList().length+1)+".csv");
+    public void writeFile() {
+        Log.d("MAKE_FILE", "MAKE_FILE");
+        File file = new File(this.getFilesDir() + "/Data" + (this.fileList().length + 1) + ".csv");
         try {
             file.createNewFile();
             PrintWriter pw = new PrintWriter(file);
-
+            //위치 저장 1번줄
+            Location currentLocation = getMyLocation();
+            if(currentLocation != null){
+                double latitude = currentLocation.getLatitude(); // 경도
+                double longitude = currentLocation.getLongitude(); // 위도
+                pw.println(latitude+","+longitude);
+            }else{
+                pw.print("37.517235,127.047325"); // 기본=서울위치
+            }
+            //Pitch Ori 저장 2번줄
             pw.println(sensorresult.getOriValue());
-            for(int i = 0 ; i < sensorQueue.size ; i++){
-                pw.println(sensorQueue.getAcc((sensorQueue.rear+i+15)%sensorQueue.size));
+
+            //ACC 저장 3번줄~32번줄 30개
+            for (int i = 0; i < sensorQueue.size; i++) {
+                pw.println(sensorQueue.getAcc((sensorQueue.rear + i + 15) % sensorQueue.size));
             }
             pw.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    //gps 현재위치 가져오기
+    private Location getMyLocation() {
+        Location currentLocation = null;
+        String locationProvider = LocationManager.GPS_PROVIDER;
+        //권한 요청
+        if (ActivityCompat.checkSelfPermission(getBaseContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions( ((MainActivity)MainActivity.mContext).getActivity(), new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION}, MODE_PRIVATE
+            );
+        }else {
+            //현재 위치 알아오기
+            currentLocation = locationManager.getLastKnownLocation(locationProvider);
+        }
+        return currentLocation;
     }
 
     @Override
