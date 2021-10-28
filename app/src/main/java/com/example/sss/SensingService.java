@@ -58,6 +58,7 @@ public class SensingService extends Service {
     public SensorQueue sensorQueue = null; // 센서데이터 저장용 큐
     float[] mGravity;
     float[] mGeomagnetic;
+    public String pitchroll = ""; //낙하시 pitch, roll
 
     //타이머핸들러
     Timerhandler timerHandler = null;
@@ -297,18 +298,18 @@ public class SensingService extends Service {
                                 if(sd.getAccSize() < 1.5) shockflag = shockflag + 1;
                                 break;
 
-                            case 1: case 2: case 3: case 4:
+                            case 1: case 2:
                                 sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
                                 //계속 자유낙하인 상태이면 case5 이동, 아니면 case0 이동
                                 if(sd.getAccSize() < 1.5) shockflag = shockflag + 1;
                                 else shockflag = 0;
                                 break;
 
-                            //자유 낙하중임을 인식, shockflag가 계속 5를 유지
-                            case 5:
+                            //자유 낙하중임을 인식, shockflag가 계속 3를 유지
+                            case 3:
                                 sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
                                 //낙하가 끝남, 충격을 크게 받기 때문에 가속도가 높게 나옴
-                                if(sd.getAccSize() >= 1.5){
+                                if(sd.getAccSize() >= 5){
                                     Log.e("CheckShock","Detected Shock!!");
                                     this.removeMessages(MESSAGE_TIMER_REPEAT);
                                     sensorresult = sd; //충격 시 센서 데이터 결과값을 저장
@@ -317,15 +318,15 @@ public class SensingService extends Service {
                                 break;
 
                             //큐에 저장하기 위한 과정(충격순간을 중앙으로 보내기)
-                            case 6: case 7: case 8: case 9: case 10:
-                            case 11: case 12: case 13: case 14: case 15:
-                            case 16: case 17: case 18: case 19:
+                            case 4: case 5: case 6: case 7: case 8:
+                            case 9: case 10: case 11: case 12: case 13:
+                            case 14:case 15: case 16: case 17:
                                 sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
                                 shockflag = shockflag + 1;
                                 break;
 
                             //큐를 엑셀파일로 저장
-                            case 20:
+                            case 18: default:
                                 sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
                                 // 여기에 큐를 엑셀파일로 추출하고 저장하는 기능 추가
                                 writeFile();
@@ -385,8 +386,9 @@ public class SensingService extends Service {
             file.createNewFile();
             PrintWriter pw = new PrintWriter(file);
 
+            pw.println(sensorresult.getOriValue());
             for(int i = 0 ; i < sensorQueue.size ; i++){
-                pw.println(sensorQueue.getAcc(i));
+                pw.println(sensorQueue.getAcc((sensorQueue.rear+i+15)%sensorQueue.size));
             }
             pw.close();
         } catch (IOException e) {
