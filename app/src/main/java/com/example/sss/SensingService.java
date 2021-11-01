@@ -18,6 +18,8 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationManager;
+import android.media.AudioManager;
+import android.media.SoundPool;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -75,6 +77,10 @@ public class SensingService extends Service {
     //현재 위치 가져오기용
     private LocationManager locationManager = null;
     private static final int REQUEST_CODE_LOCATION = 2;
+
+    //sound
+    SoundPool soundPool;
+    int soundID;
     
     
     @Override
@@ -105,6 +111,10 @@ public class SensingService extends Service {
         sensorresult.setAccValue("0.0", "0.0", "0.0");
         sensorresult.setOriValue("0.0", "0.0");
         sensorQueue = new SensorQueue();
+
+        //Sound
+        soundPool = new SoundPool(5, AudioManager.STREAM_ALARM, 0);
+        soundID = soundPool.load(((MainActivity)MainActivity.mContext), R.raw.alarm,1);
 
         initializeNotification();
     }
@@ -313,7 +323,7 @@ public class SensingService extends Service {
                             case 1:
                             case 2:
                                 sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
-                                //계속 자유낙하인 상태이면 case5 이동, 아니면 case0 이동
+                                //계속 자유낙하인 상태이면 case3 이동, 아니면 case0 이동
                                 if (sd.getAccSize() < 1.5) shockflag = shockflag + 1;
                                 else shockflag = 0;
                                 break;
@@ -335,16 +345,16 @@ public class SensingService extends Service {
                             case 5:
                             case 6:
                             case 7:
-                            case 8:
+                            case 8://5
                             case 9:
                             case 10:
                             case 11:
                             case 12:
-                            case 13:
+                            case 13://10
                             case 14:
                             case 15:
                             case 16:
-                            case 17:
+                            case 17://14
                                 sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
                                 shockflag = shockflag + 1;
                                 break;
@@ -446,6 +456,7 @@ public class SensingService extends Service {
             Interpreter tflite = getTflite("isFall.tflite");
             tflite.run(input, output);
             pw.println(String.valueOf(output[0][0]));
+            if(output[0][0]>0.5) soundPool.play(soundID, 1f, 1f, 0, 0, 1f);
 
             pw.close();
         } catch (IOException e) {
