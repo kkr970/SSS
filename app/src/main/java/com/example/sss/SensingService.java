@@ -11,6 +11,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.AssetFileDescriptor;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -18,27 +19,25 @@ import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.provider.CalendarContract;
 import android.util.Log;
-import android.widget.Switch;
 
-import java.io.BufferedWriter;
+import org.tensorflow.lite.Interpreter;
+
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.Calendar;
-import java.util.Timer;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
+
 
 public class SensingService extends Service {
     public SensingService() {
@@ -76,8 +75,8 @@ public class SensingService extends Service {
     //현재 위치 가져오기용
     private LocationManager locationManager = null;
     private static final int REQUEST_CODE_LOCATION = 2;
-
-
+    
+    
     @Override
     public void onCreate() {
         super.onCreate();
@@ -137,15 +136,6 @@ public class SensingService extends Service {
                 //센싱 종료
                 stopSensing();
 
-                //데이터 파일의 수가 10개가 넘어가면 오래된 1개를 지우고, 숫자-1, 마지막에 생성
-                if (this.fileList().length >= 10) {
-                    this.deleteFile(this.fileList()[0]);
-                    File fa[] = this.getFilesDir().listFiles();
-                    for (int i = 0; i < fa.length; i++) {
-                        fa[i].renameTo(new File(this.getFilesDir() + "/Data" + (i + 1) + ".csv"));
-                    }
-                }
-                writeFile();
                 timerHandler.sendEmptyMessage(MESSAGE_TIMER_STOP);
             }
         }
@@ -334,7 +324,7 @@ public class SensingService extends Service {
                                 //낙하가 끝남, 충격을 크게 받기 때문에 가속도가 높게 나옴
                                 if (sd.getAccSize() >= 5) {
                                     Log.e("CheckShock", "Detected Shock!!");
-                                    this.removeMessages(MESSAGE_TIMER_REPEAT);
+                                    //this.removeMessages(MESSAGE_TIMER_REPEAT);
                                     sensorresult = sd; //충격 시 센서 데이터 결과값을 저장
                                     shockflag = shockflag + 1;
                                 }
@@ -362,8 +352,16 @@ public class SensingService extends Service {
                             //큐를 엑셀파일로 저장
                             case 18:
                             default:
+                                Log.e("CheckShock", "Save Shock Data");
                                 sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
-                                // 여기에 큐를 엑셀파일로 추출하고 저장하는 기능 추가
+                                //데이터 파일의 수가 10개가 넘어가면 오래된 1개를 지우고, 숫자-1, 마지막에 생성
+                                if (fileList().length >= 10) {
+                                    deleteFile(fileList()[0]);
+                                    File fa[] = getFilesDir().listFiles();
+                                    for (int i = 0; i < fa.length; i++) {
+                                        fa[i].renameTo(new File(getFilesDir() + "/Data" + (i + 1) + ".csv"));
+                                    }
+                                }
                                 writeFile();
                                 // or 큐를 머신러닝을 돌림 충격이라 판단하면 저장
                                 shockflag = 0;
@@ -416,6 +414,11 @@ public class SensingService extends Service {
     //파일 생성
     public void writeFile() {
         Log.d("MAKE_FILE", "MAKE_FILE");
+
+        float[][] output = new float[][]{{0}};
+        float[][] input = new float[][]{{9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9},
+                {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}};
+
         File file = new File(this.getFilesDir() + "/Data" + (this.fileList().length + 1) + ".csv");
         try {
             file.createNewFile();
@@ -434,8 +437,16 @@ public class SensingService extends Service {
 
             //ACC 저장 3번줄~32번줄 30개
             for (int i = 0; i < sensorQueue.size; i++) {
-                pw.println(sensorQueue.getAcc((sensorQueue.rear + i + 15) % sensorQueue.size));
+                float temp = (float)sensorQueue.getAcc((sensorQueue.rear + i) % sensorQueue.size);
+                pw.println(temp);
+                input[i][0] = temp;
+                //Log.d("temp", String.valueOf(temp) );
             }
+            //Percent tflite line-33
+            Interpreter tflite = getTflite("isFall.tflite");
+            tflite.run(input, output);
+            pw.println(String.valueOf(output[0][0]));
+
             pw.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -448,7 +459,7 @@ public class SensingService extends Service {
         String locationProvider = LocationManager.GPS_PROVIDER;
         //권한 요청
         if (ActivityCompat.checkSelfPermission(getBaseContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions( ((MainActivity)MainActivity.mContext).getActivity(), new String[]{
+            ActivityCompat.requestPermissions( ((MainActivity)MainActivity.mContext), new String[]{
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_COARSE_LOCATION}, MODE_PRIVATE
             );
@@ -457,6 +468,25 @@ public class SensingService extends Service {
             currentLocation = locationManager.getLastKnownLocation(locationProvider);
         }
         return currentLocation;
+    }
+
+    //머신러닝
+    private Interpreter getTflite(String modelPath){
+        try{
+            return new Interpreter(loadModelFile( ((MainActivity)MainActivity.mContext), modelPath));
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+    private MappedByteBuffer loadModelFile(Activity activity, String modelPath) throws IOException {
+        AssetFileDescriptor fileDescriptor = activity.getAssets().openFd(modelPath);
+        FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
+        FileChannel fileChannel = inputStream.getChannel();
+        long startOffset = fileDescriptor.getStartOffset();
+        long declaredLength = fileDescriptor.getDeclaredLength();
+        return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
     }
 
     @Override
