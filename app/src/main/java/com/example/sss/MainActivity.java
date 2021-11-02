@@ -7,11 +7,14 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelStoreOwner;
 
 import android.Manifest;
+import android.animation.ArgbEvaluator;
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -26,6 +29,7 @@ import android.os.PowerManager;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.Switch;
@@ -40,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
     private Switch sensorswitch;
     private ImageButton settingBtn;
     private ImageButton analyzeBtn;
-
+    private Button activateBtn;
 
     //스위치 상태 유지 SP
     private SharedPreferences switchSP;
@@ -102,10 +106,18 @@ public class MainActivity extends AppCompatActivity {
         analyzeBtn = (ImageButton)findViewById(R.id.analyzeBtn);
         analyzeBtn.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {openChart(); }
+            public void onClick(View view) { openChart(); }
         });
 
         mContext = this;
+
+        activateBtn = (Button)findViewById(R.id.activateBtn);
+        activateBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sensorswitch.setChecked(!sensorswitch.isChecked());
+            }
+        });
     }
 
     @Override
@@ -150,6 +162,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked){
             if(isChecked){
+                activateBtn.setBackgroundResource(R.drawable.active_btn_on);
+                activateBtn.setText("ON");
                 Intent bgService = new Intent(getApplicationContext(), SensingService.class);
                 bgService.putExtra("isStart", true);
                 if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
@@ -159,6 +173,8 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
             else{
+                activateBtn.setBackgroundResource(R.drawable.active_btn);
+                activateBtn.setText("OFF");
                 Intent bgService = new Intent(getApplicationContext(), SensingService.class);
                 bgService.putExtra("isStart", false);
                 if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){

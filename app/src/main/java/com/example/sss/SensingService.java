@@ -373,6 +373,7 @@ public class SensingService extends Service {
                                     }
                                 }
                                 writeFile();
+
                                 // or 큐를 머신러닝을 돌림 충격이라 판단하면 저장
                                 shockflag = 0;
                                 break;

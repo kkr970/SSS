@@ -6,96 +6,56 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context=".MainActivity"
-    android:weightSum="10">
+    android:weightSum="10"
+    android:background="#212121">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="9"
+        android:gravity="center"
+        android:orientation="vertical">
+        <Button
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:text="OFF"
+            android:textColor="@color/white"
+            android:textSize="30dp"
+            android:id="@+id/activateBtn"
+            android:background="@drawable/active_btn"
+            android:fontFamily="@font/fredokaone_regular"
+            />
+        <Switch
+            android:id="@+id/sensorswitch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:thumb="@drawable/switch_thumb"
+            android:track="@drawable/switch_selector"
+            android:switchMinWidth="0dp"
+            android:thumbTextPadding="5dp"
+            android:paddingVertical="50dp"/>
+    </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:orientation="horizontal"
-        android:gravity="right"
-        android:layout_weight="1">
-        <ImageButton
-            android:id="@+id/settingBtn"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/setting"
-            android:layout_gravity="center"
-            android:scaleType="fitCenter"
-            android:background="@android:color/transparent"
-            android:layout_margin="10dp"/>
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="3">
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="150dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/logo"
-            android:layout_gravity="center"/>
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:orientation="vertical"
-        android:layout_gravity="center"
-        android:gravity="center"
-        android:layout_weight="5">
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingVertical="25dp"
-            android:orientation="vertical"
-            android:gravity="center">
-            <Switch
-                android:id="@+id/sensorswitch"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:thumb="@drawable/switch_thumb"
-                android:text=""
-                android:track="@drawable/switch_selector"
-                android:switchMinWidth="0dp"
-                android:textOff=""
-                android:textOn=""
-                android:thumbTextPadding="15dp"/>
-        </LinearLayout>
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center">
+        android:gravity="center_vertical"
+        android:layout_weight="1"
+        android:weightSum="2">
             <ImageButton
-                android:layout_width="200dp"
-                android:layout_height="200dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:src="@drawable/bar_chart"
                 android:scaleType="fitCenter"
                 android:background="@android:color/transparent"
                 android:id="@+id/analyzeBtn"
-                />
-        </LinearLayout>
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:orientation="vertical"
-        android:layout_gravity="bottom"
-        android:gravity="center"
-        android:layout_weight="1"
-        android:paddingHorizontal="5dp">
-        <TextView
-            android:id="@+id/acc"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="ACC_VALUE:"/>
-        <TextView
-            android:id="@+id/pitch"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="ORI_PITCH:"/>
-        <TextView
-            android:id="@+id/roll"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="ORI_ROLL:"/>
+                android:layout_weight="1" />
+            <ImageButton
+                android:id="@+id/settingBtn"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/setting"
+                android:scaleType="fitCenter"
+                android:background="@android:color/transparent"
+                android:layout_weight="1"/>
     </LinearLayout>
 </LinearLayout>
