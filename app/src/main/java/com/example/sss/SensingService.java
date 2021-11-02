@@ -81,6 +81,9 @@ public class SensingService extends Service {
     //sound
     SoundPool soundPool;
     int soundID;
+
+    //낙하 시간용
+    int fallSec;
     
     
     @Override
@@ -116,6 +119,8 @@ public class SensingService extends Service {
         soundPool = new SoundPool(5, AudioManager.STREAM_ALARM, 0);
         soundID = soundPool.load(((MainActivity)MainActivity.mContext), R.raw.alarm,1);
 
+        //낙하시간용
+        fallSec = 0;
         initializeNotification();
     }
 
@@ -295,6 +300,7 @@ public class SensingService extends Service {
                     Log.e("Service TimerHandler", "Service Timer Start");
                     flag = 0;
                     shockflag = 0;
+                    fallSec = 0;
                     this.removeMessages(MESSAGE_TIMER_REPEAT);
                     this.sendEmptyMessage(MESSAGE_TIMER_REPEAT);
                     break;
@@ -317,20 +323,22 @@ public class SensingService extends Service {
                                 */
                                 sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
                                 //자유낙하 감지, acc가 0에 수렴할때
-                                if (sd.getAccSize() < 1.5) shockflag = shockflag + 1;
+                                if (sd.getAccSize() < 1.5) {shockflag = shockflag + 1;}
                                 break;
 
                             case 1:
                             case 2:
-                                sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
-                                //계속 자유낙하인 상태이면 case3 이동, 아니면 case0 이동
-                                if (sd.getAccSize() < 1.5) shockflag = shockflag + 1;
-                                else shockflag = 0;
-                                break;
-
-                            //자유 낙하중임을 인식, shockflag가 계속 3를 유지
                             case 3:
                                 sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
+                                //계속 자유낙하인 상태이면 case5 이동, 아니면 case0 이동
+                                if (sd.getAccSize() < 1.5) {shockflag = shockflag + 1; fallSec++;}
+                                else {shockflag = 0; fallSec = 0;}
+                                break;
+
+                            //자유 낙하중임을 인식, shockflag가 계속 5를 유지
+                            case 4:
+                                sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
+                                fallSec++;
                                 //낙하가 끝남, 충격을 크게 받기 때문에 가속도가 높게 나옴
                                 if (sd.getAccSize() >= 5) {
                                     Log.e("CheckShock", "Detected Shock!!");
@@ -341,26 +349,26 @@ public class SensingService extends Service {
                                 break;
 
                             //큐에 저장하기 위한 과정(충격순간을 중앙으로 보내기)
-                            case 4:
                             case 5:
                             case 6:
                             case 7:
-                            case 8://5
-                            case 9:
+                            case 8:
+                            case 9://5
                             case 10:
                             case 11:
                             case 12:
-                            case 13://10
-                            case 14:
+                            case 13:
+                            case 14://10
                             case 15:
                             case 16:
-                            case 17://14
+                            case 17:
+                            case 18://14
                                 sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
                                 shockflag = shockflag + 1;
                                 break;
 
                             //큐를 엑셀파일로 저장
-                            case 18:
+                            case 19:
                             default:
                                 Log.e("CheckShock", "Save Shock Data");
                                 sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
@@ -376,6 +384,7 @@ public class SensingService extends Service {
 
                                 // or 큐를 머신러닝을 돌림 충격이라 판단하면 저장
                                 shockflag = 0;
+                                fallSec = 0;
                                 break;
                         }
                     }
@@ -458,6 +467,9 @@ public class SensingService extends Service {
             tflite.run(input, output);
             pw.println(String.valueOf(output[0][0]));
             if(output[0][0]>0.5) soundPool.play(soundID, 1f, 1f, 0, 0, 1f);
+
+            //fallSec line-34
+            pw.println((float)fallSec*50/1000);
 
             pw.close();
         } catch (IOException e) {
