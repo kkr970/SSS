@@ -25,6 +25,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.util.Log;
+import android.widget.Toast;
 
 import org.tensorflow.lite.Interpreter;
 
@@ -35,6 +36,9 @@ import java.io.PrintWriter;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Calendar;
+
+import javax.mail.MessagingException;
+import javax.mail.SendFailedException;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -84,6 +88,9 @@ public class SensingService extends Service {
 
     //낙하 시간용
     int fallSec;
+
+    //e-mail보내기
+    String body = "";
     
     
     @Override
@@ -381,10 +388,12 @@ public class SensingService extends Service {
                                     }
                                 }
                                 writeFile();
-
+                                SendMail mailServer = new SendMail();
+                                mailServer.sendSecurityCode(getApplicationContext(), "kkr970@gmail.com", body);//들어갈 이메일
                                 // or 큐를 머신러닝을 돌림 충격이라 판단하면 저장
                                 shockflag = 0;
                                 fallSec = 0;
+                                body = "";
                                 break;
                         }
                     }
@@ -449,8 +458,10 @@ public class SensingService extends Service {
                 double latitude = currentLocation.getLatitude(); // 경도
                 double longitude = currentLocation.getLongitude(); // 위도
                 pw.println(latitude+","+longitude);
+                body = latitude+","+longitude;
             }else{
                 pw.print("37.517235,127.047325"); // 기본=서울위치
+                body = "37.517235,127.047325";
             }
             //Pitch Ori 저장 2번줄
             pw.println(sensorresult.getOriValue());
@@ -530,6 +541,21 @@ public class SensingService extends Service {
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), sender);
 
+    }
+
+    //이메일 전송
+    public void sendSecurityCode(Context context, String sendTo){
+        try{
+            GMailSender gMailSender = new GMailSender("sssnotreply@gmail.com", "potpourri1!");
+            gMailSender.sendMail("SSS 충격감지!", body, sendTo);
+            //Toast.makeText(context, "이메일을 성공적으로 보냈습니다.", Toast.LENGTH_SHORT).show();
+        }catch (SendFailedException e){
+            Toast.makeText(context, "이메일 형식이 잘못되었습니다.", Toast.LENGTH_SHORT).show();
+        }catch (MessagingException e){
+            Toast.makeText(context, "인터넷 연결을 확인해주십시오", Toast.LENGTH_SHORT).show();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     @Override
