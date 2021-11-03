@@ -53,10 +53,28 @@ public class MainActivity extends AppCompatActivity {
     //다른엑티비티 연동
     public static Context mContext;
 
+    //하단 네비게이션 바 생략
+    private View decorView;
+    private int uiOption;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //바 생략
+        decorView = getWindow().getDecorView();
+        uiOption = getWindow().getDecorView().getSystemUiVisibility();
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH){
+            uiOption |= View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+        }
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN){
+            uiOption |= View.SYSTEM_UI_FLAG_FULLSCREEN;
+        }
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT){
+            uiOption |= View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+        }
 
         //권한 확인, 권한 요청
         int pm1 = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
@@ -103,11 +121,6 @@ public class MainActivity extends AppCompatActivity {
         sensorswitch = findViewById(R.id.sensorswitch);
         sensorswitch.setOnCheckedChangeListener(new sensorSwitchListener());
 
-        //On Off스위치 SP
-        switchSP = getSharedPreferences("switchSP", MODE_PRIVATE);
-        boolean isChecked = switchSP.getBoolean("SWITCH_DATA", false);
-        sensorswitch.setChecked(isChecked);
-
         //지도 화면 이동
         analyzeBtn = (ImageButton)findViewById(R.id.analyzeBtn);
         analyzeBtn.setOnClickListener(new View.OnClickListener() {
@@ -124,6 +137,19 @@ public class MainActivity extends AppCompatActivity {
                 sensorswitch.setChecked(!sensorswitch.isChecked());
             }
         });
+
+        //On Off스위치 SP
+        switchSP = getSharedPreferences("switchSP", MODE_PRIVATE);
+        boolean isChecked = switchSP.getBoolean("SWITCH_DATA", false);
+        sensorswitch.setChecked(isChecked);
+    }
+
+    //내비게이션 바, 액션 바, 풀 스크린
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        if(hasFocus){
+            decorView.setSystemUiVisibility(uiOption);
+        }
     }
 
     @Override
