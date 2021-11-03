@@ -1,71 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    >
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="10dp">
-        <ImageButton
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:src="@drawable/left_arrow"
-            android:scaleType="fitCenter"
-            android:background="@android:color/transparent"
-            android:padding="5dp"
-            android:id="@+id/backBtn"/>
-        <Space
-            android:layout_width="match_parent"
-            android:layout_height="0px"
-            android:layout_weight="1"/>
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="YYYY/MM/DD hh:mm:ss"
-            android:textAlignment="center"
-            android:textSize="20dp"
-            android:layout_gravity="center"/>
-        <Space
-            android:layout_width="match_parent"
-            android:layout_height="0px"
-            android:layout_weight="1"/>
-        <ImageButton
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:src="@drawable/menu"
-            android:scaleType="fitCenter"
-            android:background="@android:color/transparent"/>
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#808080"/>
+    tools:context=".MainActivity"
+    android:background="#212121">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="2"
-            android:orientation="vertical">
-            <fragment
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="10dp"
+            android:background="#212121">
+            <ImageButton
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:src="@drawable/left_arrow"
+                android:scaleType="fitCenter"
+                android:background="@android:color/transparent"
+                android:padding="5dp"
+                android:id="@+id/backBtn"/>
+            <Space
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:id="@+id/map"
-                android:name="com.google.android.gms.maps.SupportMapFragment"
-                xmlns:tools="http://schemas.android.com/tools"
-                tools:context=".MapActivity"
+                android:layout_height="0px"
                 android:layout_weight="1"/>
-            <LinearLayout
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="YYYY/MM/DD hh:mm:ss"
+                android:textAlignment="center"
+                android:textSize="20dp"
+                android:layout_gravity="center"
+                android:textColor="#757575"/>
+            <Space
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1">
-            </LinearLayout>
+                android:layout_height="0px"
+                android:layout_weight="1" />
+            <ImageButton
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:src="@drawable/menu"
+                android:scaleType="fitCenter"
+                android:background="@android:color/transparent"
+                android:id="@+id/sidebar_on"
+                />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:layout_weight="2">
+                <fragment
+                    android:id="@+id/map"
+                    android:name="com.google.android.gms.maps.SupportMapFragment"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    tools:context=".MapActivity" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1">
+                </LinearLayout>
         </LinearLayout>
     </LinearLayout>
-</LinearLayout>
+
+    <include layout="@layout/activity_sidebar" />
+
+</androidx.drawerlayout.widget.DrawerLayout>
