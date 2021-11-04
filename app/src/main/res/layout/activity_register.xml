@@ -51,8 +51,8 @@
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
-                android:text="E-Mail 주소를 입력하세요."
-                android:textColor="#808080"
+                android:hint="E-Mail 주소를 입력하세요."
+                android:textColorHint="#808080"
                 android:inputType="textEmailAddress"
                 android:id="@+id/userEmail"/>
         </LinearLayout>
