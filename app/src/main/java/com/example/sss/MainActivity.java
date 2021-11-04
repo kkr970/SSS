@@ -58,6 +58,9 @@ public class MainActivity extends AppCompatActivity {
     private View decorView;
     private int uiOption;
 
+    //이메일
+    private String userEmail;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -151,6 +154,9 @@ public class MainActivity extends AppCompatActivity {
                 finish();
             }
         });
+
+        //이메일SP
+        userEmail = switchSP.getString("EMAIL_DATA", null);
     }
 
     //내비게이션 바, 액션 바, 풀 스크린
@@ -165,6 +171,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onStop(){
         super.onStop();
         switchSave();
+        emailSave();
     }
     @Override
     protected void onPause() {
@@ -174,6 +181,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        switchSave();
+        emailSave();
         Log.e("LOG", "onDestroy()");
     }
 
@@ -189,6 +198,18 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences.Editor editor = switchSP.edit();
         editor.putBoolean("SWITCH_DATA", sensorswitch.isChecked());
         editor.apply();
+    }
+    //이메일 저장 SP
+    private void emailSave(){
+        SharedPreferences.Editor editor = switchSP.edit();
+        editor.putString("EMAIL_DATA", userEmail);
+        editor.apply();
+    }
+    public void setUserEmail(String email){
+        userEmail = email;
+    }
+    public String getUserEmail(){
+        return userEmail;
     }
 
     //지도 이동 버튼
@@ -228,7 +249,4 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public Activity getActivity(){
-        return this;
-    }
 }
