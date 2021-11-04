@@ -30,12 +30,15 @@ import android.widget.Toast;
 import org.tensorflow.lite.Interpreter;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 
 import javax.mail.MessagingException;
 import javax.mail.SendFailedException;
@@ -92,7 +95,13 @@ public class SensingService extends Service {
     //e-mail보내기
     String body = "";
     String userEmail = "";
-    
+
+    //현재시간 가져오기
+    long mNow;
+    Date mDate;
+    SimpleDateFormat mFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+    String shockTime = "";
+
     
     @Override
     public void onCreate() {
@@ -350,6 +359,7 @@ public class SensingService extends Service {
                                 //낙하가 끝남, 충격을 크게 받기 때문에 가속도가 높게 나옴
                                 if (sd.getAccSize() >= 5) {
                                     Log.e("CheckShock", "Detected Shock!!");
+                                    shockTime = getTime();
                                     //this.removeMessages(MESSAGE_TIMER_REPEAT);
                                     sensorresult = sd; //충격 시 센서 데이터 결과값을 저장
                                     shockflag = shockflag + 1;
@@ -380,7 +390,7 @@ public class SensingService extends Service {
                             default:
                                 Log.e("CheckShock", "Save Shock Data");
                                 sensorQueue.enqueue(sd.getAccSize(), sd.getPitch(), sd.getRoll());
-                                //데이터 파일의 수가 10개가 넘어가면 오래된 1개를 지우고, 숫자-1, 마지막에 생성
+                                /*데이터 파일의 수가 10개가 넘어가면 오래된 1개를 지우고, 숫자-1, 마지막에 생성
                                 if (fileList().length >= 10) {
                                     deleteFile(fileList()[0]);
                                     File fa[] = getFilesDir().listFiles();
@@ -388,6 +398,8 @@ public class SensingService extends Service {
                                         fa[i].renameTo(new File(getFilesDir() + "/Data" + (i + 1) + ".csv"));
                                     }
                                 }
+
+                                 */
                                 writeFile();
                                 SendMail mailServer = new SendMail();
                                 userEmail = ((MainActivity)MainActivity.mContext).getUserEmail();
@@ -449,12 +461,23 @@ public class SensingService extends Service {
         float[][] output = new float[][]{{0}};
         float[][] input = new float[][]{{9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9},
                 {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}, {9}};
-
-        File file = new File(this.getFilesDir() + "/Data" + (this.fileList().length + 1) + ".csv");
+        int num = 0;
+        File fa[] = getFilesDir().listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File file) {
+                return file.getName().startsWith("Data");
+            }
+        });
+        num = fa.length;
+        File file = new File(this.getFilesDir() + "/Data" + (num+1) + ".csv");
         try {
             file.createNewFile();
             PrintWriter pw = new PrintWriter(file);
-            //위치 저장 1번줄
+
+            //충격시간 line-1
+            pw.println(shockTime);
+
+            //위치 저장 2번줄
             Location currentLocation = getMyLocation();
             if(currentLocation != null){
                 double latitude = currentLocation.getLatitude(); // 경도
@@ -465,24 +488,29 @@ public class SensingService extends Service {
                 pw.print("37.517235,127.047325"); // 기본=서울위치
                 body = "37.517235,127.047325";
             }
-            //Pitch Ori 저장 2번줄
+            //Percent tflite line-3
+            for (int i = 0; i < sensorQueue.size; i++) {
+                float temp = (float)sensorQueue.getAcc((sensorQueue.rear + i) % sensorQueue.size);
+                input[i][0] = temp;
+            }
+            Interpreter tflite = getTflite("isFall.tflite");
+            tflite.run(input, output);
+            pw.println(String.valueOf(output[0][0]));
+            if(output[0][0]>0.5) soundPool.play(soundID, 1f, 1f, 0, 0, 1f);
+
+            //fallSec line-4
+            pw.println((float)fallSec*50/1000);
+
+            //Pitch Ori 저장 5번줄
             pw.println(sensorresult.getOriValue());
 
-            //ACC 저장 3번줄~32번줄 30개
+            //ACC 저장 6~번줄 35번줄 30개
             for (int i = 0; i < sensorQueue.size; i++) {
                 float temp = (float)sensorQueue.getAcc((sensorQueue.rear + i) % sensorQueue.size);
                 pw.println(temp);
                 input[i][0] = temp;
                 //Log.d("temp", String.valueOf(temp) );
             }
-            //Percent tflite line-33
-            Interpreter tflite = getTflite("isFall.tflite");
-            tflite.run(input, output);
-            pw.println(String.valueOf(output[0][0]));
-            if(output[0][0]>0.5) soundPool.play(soundID, 1f, 1f, 0, 0, 1f);
-
-            //fallSec line-34
-            pw.println((float)fallSec*50/1000);
 
             pw.close();
         } catch (IOException e) {
@@ -505,6 +533,13 @@ public class SensingService extends Service {
             currentLocation = locationManager.getLastKnownLocation(locationProvider);
         }
         return currentLocation;
+    }
+
+    //시간 가져오기
+    private String getTime(){
+        mNow = System.currentTimeMillis();
+        mDate = new Date(mNow);
+        return mFormat.format(mDate);
     }
 
     //머신러닝
