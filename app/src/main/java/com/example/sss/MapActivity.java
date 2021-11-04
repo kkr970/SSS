@@ -1,10 +1,19 @@
 package com.example.sss;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentActivity;
 
+import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
@@ -75,6 +84,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback{
         });
     }
 
+    //google map 표기 관련
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
@@ -87,6 +97,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback{
         markerOptions.snippet("한국의 수도");
         mMap.addMarker(markerOptions);
         mMap.moveCamera(CameraUpdateFactory.newLatLng(SEOUL));
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(10));
     }
 
     DrawerLayout.DrawerListener listener = new DrawerLayout.DrawerListener() {
