@@ -37,24 +37,39 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="사용자 E-Mail"
+            android:textSize="18dp"
+            android:textColor="@color/white"
+            android:layout_margin="10dp"/>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="10dp">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="사용자 E-Mail"
-                android:textSize="18dp"
-                android:textColor="@color/white" />
+            android:orientation="horizontal"
+            android:padding="10dp"
+            android:weightSum="10">
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:hint="E-Mail 주소를 입력하세요."
                 android:textColorHint="#808080"
+                android:textColor="@color/white"
                 android:inputType="textEmailAddress"
-                android:id="@+id/userEmail"/>
+                android:id="@+id/userEmail"
+                android:layout_weight="8"
+                android:enabled="false"/>
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/submit_btn"
+                android:text="등록"
+                android:layout_gravity="center"
+                android:textColor="@color/white"
+                android:textSize="15dp"
+                android:id="@+id/submitBtn"
+                android:layout_weight="2"/>
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>
