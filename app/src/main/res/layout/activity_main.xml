@@ -42,7 +42,7 @@
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:layout_weight="1"
-        android:weightSum="2">
+        android:weightSum="3">
             <ImageButton
                 android:layout_width="30dp"
                 android:layout_height="30dp"
@@ -56,6 +56,14 @@
                 android:layout_width="30dp"
                 android:layout_height="30dp"
                 android:src="@drawable/setting"
+                android:scaleType="fitCenter"
+                android:background="@android:color/transparent"
+                android:layout_weight="1"/>
+            <ImageButton
+                android:id="@+id/closeBtn"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:src="@drawable/close"
                 android:scaleType="fitCenter"
                 android:background="@android:color/transparent"
                 android:layout_weight="1"/>

@@ -45,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
     private Switch sensorswitch;
     private ImageButton settingBtn;
     private ImageButton analyzeBtn;
+    private ImageButton closeBtn;
     private Button activateBtn;
 
     //스위치 상태 유지 SP
@@ -142,6 +143,14 @@ public class MainActivity extends AppCompatActivity {
         switchSP = getSharedPreferences("switchSP", MODE_PRIVATE);
         boolean isChecked = switchSP.getBoolean("SWITCH_DATA", false);
         sensorswitch.setChecked(isChecked);
+
+        closeBtn = (ImageButton)findViewById(R.id.closeBtn);
+        closeBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
     }
 
     //내비게이션 바, 액션 바, 풀 스크린
