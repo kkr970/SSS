@@ -63,6 +63,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback{
     String tfResult = "0";
     String address = "";
     String fallTime = "0";
+    String[] temp = new String[2];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -126,7 +127,6 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback{
 
 
             addressText = findViewById(R.id.txtAddress);
-            String[] temp = new String[2];
             temp = latitudeLongitude.split(",");
             Log.d("double", temp[0]+","+temp[1]);
             address = getCurrentAddress(Double.valueOf(temp[0]), Double.valueOf(temp[1]));
@@ -144,7 +144,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback{
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        LatLng SEOUL = new LatLng(37.56, 126.97);
+        LatLng SEOUL = new LatLng(Double.valueOf(temp[0]), Double.valueOf(temp[1]));
 
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(SEOUL);
