@@ -36,13 +36,15 @@ public class RegisterActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 //등록 버튼 이벤트
-                if(submitBtn.getText() == "등록"){
-                    submitBtn.setText("수정");
+                if(submitBtn.getText() == "수정"){
+                    submitBtn.setText("등록");
                     submitBtn.setBackgroundResource(R.drawable.submit_btn_on);
+                    userEmail.setHint("E-mail을 입력하세요.");
                     userEmail.setEnabled(true);
                 } else {
-                    submitBtn.setText("등록");
+                    submitBtn.setText("수정");
                     submitBtn.setBackgroundResource(R.drawable.submit_btn);
+                    userEmail.setHint("수정 버튼을 눌러 E-mail을 입력하세요.");
                     userEmail.setEnabled(false);
                 }
             }
