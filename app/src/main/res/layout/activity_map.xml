@@ -65,7 +65,38 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_weight="1">
+                    android:layout_weight="1"
+                    android:padding="15dp"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="위도 : "
+                        android:textSize="18dp"
+                        android:textColor="@color/white"
+                        android:layout_marginVertical="10dp"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="경도 : "
+                        android:textSize="18dp"
+                        android:textColor="@color/white"
+                        android:layout_marginVertical="10dp"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="주소 : "
+                        android:textSize="18dp"
+                        android:textColor="@color/white"
+                        android:layout_marginVertical="10dp"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="체공 시간 : "
+                        android:textSize="18dp"
+                        android:textColor="@color/white"
+                        android:layout_marginVertical="10dp"/>
+
                 </LinearLayout>
         </LinearLayout>
     </LinearLayout>
