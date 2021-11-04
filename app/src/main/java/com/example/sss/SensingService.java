@@ -91,6 +91,7 @@ public class SensingService extends Service {
 
     //e-mail보내기
     String body = "";
+    String userEmail = "";
     
     
     @Override
@@ -389,7 +390,8 @@ public class SensingService extends Service {
                                 }
                                 writeFile();
                                 SendMail mailServer = new SendMail();
-                                mailServer.sendSecurityCode(getApplicationContext(), "kkr970@gmail.com", body);//들어갈 이메일
+                                userEmail = ((MainActivity)MainActivity.mContext).getUserEmail();
+                                mailServer.sendSecurityCode(getApplicationContext(), userEmail, body);
                                 // or 큐를 머신러닝을 돌림 충격이라 판단하면 저장
                                 shockflag = 0;
                                 fallSec = 0;
@@ -541,21 +543,6 @@ public class SensingService extends Service {
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), sender);
 
-    }
-
-    //이메일 전송
-    public void sendSecurityCode(Context context, String sendTo){
-        try{
-            GMailSender gMailSender = new GMailSender("sssnotreply@gmail.com", "potpourri1!");
-            gMailSender.sendMail("SSS 충격감지!", body, sendTo);
-            //Toast.makeText(context, "이메일을 성공적으로 보냈습니다.", Toast.LENGTH_SHORT).show();
-        }catch (SendFailedException e){
-            Toast.makeText(context, "이메일 형식이 잘못되었습니다.", Toast.LENGTH_SHORT).show();
-        }catch (MessagingException e){
-            Toast.makeText(context, "인터넷 연결을 확인해주십시오", Toast.LENGTH_SHORT).show();
-        }catch (Exception e){
-            e.printStackTrace();
-        }
     }
 
     @Override

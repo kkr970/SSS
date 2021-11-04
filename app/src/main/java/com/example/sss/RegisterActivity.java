@@ -14,13 +14,19 @@ public class RegisterActivity extends AppCompatActivity {
     private EditText userEmail;
     private Button submitBtn;
 
+    private String emailAddress;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
+        emailAddress = ((MainActivity)MainActivity.mContext).getUserEmail();
+
         //사용자 이메일 칸
         userEmail = (EditText)findViewById(R.id.userEmail);
+        if(emailAddress != null)
+            userEmail.setText(emailAddress);
 
         backBtn = (ImageButton)findViewById(R.id.backBtn);
         backBtn.setOnClickListener(new View.OnClickListener() {
@@ -46,6 +52,7 @@ public class RegisterActivity extends AppCompatActivity {
                     submitBtn.setBackgroundResource(R.drawable.submit_btn);
                     userEmail.setHint("수정 버튼을 눌러 E-mail을 입력하세요.");
                     userEmail.setEnabled(false);
+                    ((MainActivity)MainActivity.mContext).setUserEmail(userEmail.getText().toString());
                 }
             }
         });
