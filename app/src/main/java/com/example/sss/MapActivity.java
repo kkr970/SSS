@@ -39,6 +39,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Locale;
 
@@ -65,10 +66,15 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback{
     String fallTime = "0";
     String[] temp = new String[2];
 
+    //파일 숫자
+    DecimalFormat df;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
+
+        df = new DecimalFormat("00");
 
         SupportMapFragment mapFragment = (SupportMapFragment)getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -114,8 +120,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback{
         });
 
         //정보 가져오기
-        readCSV();
-        if(shockTime != null) {
+        if( readCSV() ) {
             dateTime = findViewById(R.id.dateTime);
             dateTime.setText(shockTime);
 
@@ -144,8 +149,10 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback{
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        LatLng SEOUL = new LatLng(Double.valueOf(temp[0]), Double.valueOf(temp[1]));
-
+        LatLng SEOUL = new LatLng(37.517235,127.047325);
+        if(temp[0] != null || temp[1] != null) {
+            SEOUL = new LatLng(Double.valueOf(temp[0]), Double.valueOf(temp[1]));
+        }
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(SEOUL);
         markerOptions.title("나의 위치");
@@ -178,7 +185,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback{
     };
 
     //csv파일 읽기
-    private void readCSV(){
+    private boolean readCSV(){
         File fa[] = getFilesDir().listFiles(new FileFilter() {
             @Override
             public boolean accept(File file) {
@@ -187,7 +194,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback{
         });
         int num = fa.length;
         BufferedReader br = null;
-        String path = getFilesDir().getAbsolutePath()+"/Data"+(num)+".csv";
+        String path = getFilesDir().getAbsolutePath()+"/Data"+df.format(num)+".csv";
         Log.e("READCSV", path);
         try {
             String line;
@@ -225,9 +232,12 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback{
             }
         } catch (FileNotFoundException fileNotFoundException) {
             fileNotFoundException.printStackTrace();
+            return false;
         } catch (IOException e) {
             e.printStackTrace();
+            return false;
         }
+        return true;
     }
 
     public String getCurrentAddress( double latitude, double longitude) {

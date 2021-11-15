@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -102,6 +103,9 @@ public class SensingService extends Service {
     SimpleDateFormat mFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
     String shockTime = "";
 
+    //파일저장 숫자
+    DecimalFormat df;
+
     
     @Override
     public void onCreate() {
@@ -139,6 +143,9 @@ public class SensingService extends Service {
         //낙하시간용
         fallSec = 0;
         initializeNotification();
+
+        //파일저장 숫자
+        df = new DecimalFormat("00");
     }
 
     @Override
@@ -469,7 +476,7 @@ public class SensingService extends Service {
             }
         });
         num = fa.length;
-        File file = new File(this.getFilesDir() + "/Data" + (num+1) + ".csv");
+        File file = new File(this.getFilesDir() + "/Data" + df.format(num+1) + ".csv");
         try {
             file.createNewFile();
             PrintWriter pw = new PrintWriter(file);

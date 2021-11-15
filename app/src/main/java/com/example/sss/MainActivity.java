@@ -38,6 +38,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.DecimalFormat;
 import java.util.Timer;
 
 public class MainActivity extends AppCompatActivity {
@@ -60,6 +66,9 @@ public class MainActivity extends AppCompatActivity {
 
     //이메일
     private String userEmail;
+
+    //파일숫자
+    DecimalFormat df;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -157,6 +166,25 @@ public class MainActivity extends AppCompatActivity {
 
         //이메일SP
         userEmail = switchSP.getString("EMAIL_DATA", null);
+
+        //파일 숫자 정렬
+        df = new DecimalFormat("00");
+        File fa[] = getFilesDir().listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File file) {
+                return file.getName().startsWith("Data");
+            }
+        });
+        if(fa != null){
+            for(int j = 0 ; j < fa.length ; j++){
+                try {
+                    Path source = Paths.get(this.getFilesDir()+"/"+fa[j].getName());
+                    Files.move(source, source.resolveSibling(this.getFilesDir()+"/Data"+df.format(j+1)+".csv"));
+                } catch (Exception e) {
+                    System.out.println(e);
+                }
+            }
+        }
     }
 
     //내비게이션 바, 액션 바, 풀 스크린
