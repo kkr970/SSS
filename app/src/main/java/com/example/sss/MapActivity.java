@@ -148,11 +148,11 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback{
 
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(SEOUL);
-        markerOptions.title("서울");
-        markerOptions.snippet("한국의 수도");
+        markerOptions.title("나의 위치");
+        markerOptions.snippet("최근 떨어뜨린 장소");
         mMap.addMarker(markerOptions);
         mMap.moveCamera(CameraUpdateFactory.newLatLng(SEOUL));
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(10));
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(16));
     }
 
     DrawerLayout.DrawerListener listener = new DrawerLayout.DrawerListener() {
