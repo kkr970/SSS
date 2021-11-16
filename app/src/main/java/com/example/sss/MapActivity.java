@@ -146,7 +146,6 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback{
             fallTimeText = findViewById(R.id.txtFallTime);
             fallTimeText.setText("머무른 시간 : "+fallTime);
         }
-
     }
 
     //google map 표기 관련
@@ -163,10 +162,12 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback{
         markerOptions.position(SEOUL);
         markerOptions.title("나의 위치");
         markerOptions.snippet("최근 떨어뜨린 장소");
+        mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         mMap.addMarker(markerOptions);
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(SEOUL));
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(16));
+        uiSettings.setZoomControlsEnabled(true);
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(SEOUL, 16));
     }
+
 
     DrawerLayout.DrawerListener listener = new DrawerLayout.DrawerListener() {
         @Override

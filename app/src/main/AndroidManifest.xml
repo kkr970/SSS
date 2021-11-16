@@ -19,8 +19,8 @@
         android:theme="@style/Theme.SSS">
 
         <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyCKQXG3vroRQIQBwAHVOiUaFusthQWDkZI"
+            android:name="com.google.android.maps.v2.API_KEY"
+            android:value="AIzaSyDaMGSmGwwnEMfmbk_oQB0kEuAtbr-t5F0"
 
             />
 
