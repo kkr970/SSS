@@ -276,5 +276,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
+    public Activity getActivity(){
+        return this;
+    }
 }

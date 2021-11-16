@@ -29,6 +29,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -69,6 +70,9 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback{
     //파일 숫자
     DecimalFormat df;
 
+    //지도
+    UiSettings uiSettings;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -78,6 +82,7 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback{
 
         SupportMapFragment mapFragment = (SupportMapFragment)getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
 
         //뒤로 가기
         backBtn = (ImageButton)findViewById(R.id.backBtn);
@@ -148,9 +153,10 @@ public class MapActivity extends FragmentActivity implements OnMapReadyCallback{
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        uiSettings = mMap.getUiSettings();
 
         LatLng SEOUL = new LatLng(37.517235,127.047325);
-        if(temp[0] != null || temp[1] != null) {
+        if(temp[0] != null) {
             SEOUL = new LatLng(Double.valueOf(temp[0]), Double.valueOf(temp[1]));
         }
         MarkerOptions markerOptions = new MarkerOptions();

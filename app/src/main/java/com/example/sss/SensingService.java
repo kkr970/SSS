@@ -138,7 +138,7 @@ public class SensingService extends Service {
 
         //Sound
         soundPool = new SoundPool(5, AudioManager.STREAM_ALARM, 0);
-        soundID = soundPool.load(((MainActivity)MainActivity.mContext), R.raw.alarm,1);
+        soundID = soundPool.load(((MainActivity)MainActivity.mContext).getActivity(), R.raw.alarm,1);
 
         //낙하시간용
         fallSec = 0;
